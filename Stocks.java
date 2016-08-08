@@ -1,3 +1,4 @@
+package stock;
 import java.util.*;
 import java.text.*;
  
@@ -5,13 +6,12 @@ public class Stocks {
  
 private int shares;
 private int price;
-private int temp;
-private static int total;
-private int finalPrice;
-private int finalShares;
-private Queue<Stocks> StockList = new LinkedList<Stocks>();
+private static int totalSpent;
+private static double capitalGains; //Total profit
+private static Queue<Stocks> StockList = new LinkedList<Stocks>();
  
 private static NumberFormat nf = NumberFormat.getCurrencyInstance();
+
 public static void main(String[] args){
  
  
@@ -27,7 +27,9 @@ public static void main(String[] args){
     inputArray = input.split(";");
  
     for (String i : inputArray) {
+    	
         if (i.toUpperCase().contains("BUY")) {
+        	
             inputArray2 = i.split(" ");
             inputArray2[4] = inputArray2[4].substring(1);
  
@@ -46,7 +48,7 @@ public static void main(String[] args){
         }
  
         else if (i.toUpperCase().contains("SELL")) {
-            inputArray2 = input.split(" ");
+            inputArray2 = i.split(" ");
             inputArray2[4] = inputArray2[4].substring(1);
  
             try {
@@ -63,7 +65,9 @@ public static void main(String[] args){
         } else {
             System.out.println("Error - input does not contain buy/sell");
         }
-    }System.out.println(nf.format(getTotal()));
+    }
+    System.out.println("Amount spent: " + nf.format(getTotalSpent()));
+    System.out.println("Capital Gains: " + nf.format(getCGains()));
 }
  
 public Stocks()
@@ -99,32 +103,56 @@ public void setPrice(int price)
     this.price = price;
 }
  
+public static double getCGains() {
+	return capitalGains;
+}
+
+public static void setCGains(double capitalGains) {
+	Stocks.capitalGains = capitalGains;
+}
+
 public void sell() {
+	
     int sharesToSell = this.getShares();
     int priceToSell = this.getPrice();
  
-    while (!StockList.isEmpty()) {
+    while (sharesToSell > 0) {//Keep selling from other stocks until you complete the sale
  
          int numShares = StockList.peek().getShares();
          int sharePrice = StockList.peek().getPrice();
  
-        if (numShares < sharesToSell || numShares == sharesToSell) {
-            temp = sharesToSell - numShares; // remaining shares to sell
-            finalShares = sharesToSell - temp; // # shares selling at price
-            finalPrice = priceToSell - sharePrice; // shares sold at adjusted price
-            total += (finalPrice * finalShares); // Calculates total price
-            StockList.remove();
-            sharesToSell = temp; // Remaining shares needed to be sold @ price
-           
-        }
- 
-        if (numShares > sharesToSell) {
-            temp = numShares - sharesToSell; // Remaining shares that were bought
-            finalPrice = priceToSell - sharePrice; // Shares sold at adjusted price
-            total += (finalPrice * sharesToSell); // adds to running total
-            StockList.peek().setShares(temp);
-           
-        }
+			try {
+
+				if (numShares < sharesToSell || numShares == sharesToSell) {
+					// temp = sharesToSell - numShares; // remaining shares to sell
+					// finalShares = sharesToSell - temp; // # shares selling at price
+					// finalPrice = priceToSell - sharePrice; // shares sold at adjusted price
+					// total += (finalPrice * finalShares); // Calculates total price
+					// StockList.remove();
+					// sharesToSell = temp; // Remaining shares needed to be sold @ price
+					
+					int temp = sharesToSell - numShares; // remaining shares to sell
+					int finalShares = sharesToSell - temp; // # shares selling at price
+					StockList.remove();
+					double cGain = priceToSell - sharePrice;// profit per share
+					capitalGains += (cGain * finalShares);// total profit from set of stocks added to total overall profit
+					sharesToSell = temp; // Remaining shares needed to be sold @price
+				}
+
+				else if (numShares > sharesToSell) {
+					int temp = numShares - sharesToSell; // Remaining shares that were bought
+					int finalShares = sharesToSell - temp; // # shares selling at price
+					double cGain = priceToSell - sharePrice;// profit per share
+					capitalGains += (cGain * finalShares);// total profit from set of stocks added to total overall profit
+					sharesToSell = temp; // Remaining shares needed to be sold @price
+					StockList.peek().setShares(temp);
+
+				}
+
+			} catch (Exception e) {
+				// Todo
+				System.out.println(e.getMessage());
+			}
     }
 }
  
@@ -136,11 +164,17 @@ public void buy() {
     StockList.add(newStock); // adds stock to list
  
     int temptotal = (numShares * priceToBuy); // decreases running total
-    total += (-1 * temptotal);
+    totalSpent += (-1 * temptotal);
+}
+
+//Testing
+public String toString(){
+	return "Price:" + price + "#Shares:" + shares;
+	
 }
  
-public static int getTotal() { // gets total profit (or loss)
-    return total;
+public static int getTotalSpent() { // gets total profit (or loss)
+    return totalSpent;
 }
  
 }
